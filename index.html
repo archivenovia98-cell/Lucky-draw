@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Lucky Draw">
+<title>Lucky Draw Hadiah</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#f4f6f8;--card:#fff;--text:#17202a;--muted:#667085;--line:#d9dee7;
+  --primary:#2563eb;--primary-soft:#eaf1ff;--danger:#b42318;--success:#067647
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+.wrap{max-width:760px;margin:auto;padding:calc(18px + env(safe-area-inset-top)) 14px calc(40px + env(safe-area-inset-bottom))}
+h1{font-size:28px;margin:0 0 5px}
+.subtitle{color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.result{background:var(--primary-soft);border:2px solid var(--primary)}
+.eyebrow{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.4px}
+.result-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:12px;margin-top:8px}
+.result-box small{display:block;color:var(--muted);font-size:12px;margin-bottom:4px}
+.result-main{font-size:24px;font-weight:800;line-height:1.25}
+.field{margin-bottom:15px}
+label{display:block;font-size:15px;font-weight:700;margin-bottom:7px}
+input[type=text],input[type=number],input[type=search]{
+  width:100%;font-size:16px;padding:13px 14px;border:1px solid var(--line);border-radius:12px;
+  background:white;color:var(--text);outline:none;min-height:49px
+}
+input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+button,.file-label{font:inherit}
+.primary{
+  width:100%;min-height:50px;border:0;border-radius:12px;background:var(--primary);color:#fff;
+  font-weight:800;font-size:16px;cursor:pointer
+}
+.secondary{
+  min-height:40px;border:1px solid var(--line);background:#fff;border-radius:10px;
+  padding:8px 11px;cursor:pointer;color:var(--text);font-weight:700
+}
+.danger{color:var(--danger)}
+.notice{display:none;margin-bottom:12px;border-radius:10px;padding:10px 12px;font-size:14px}
+.notice.error{display:block;background:#fff1f0;border:1px solid #f3c2bd;color:var(--danger)}
+.notice.ok{display:block;background:#ecfdf3;border:1px solid #abefc6;color:var(--success)}
+.headrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.headrow h2{font-size:18px;margin:0}
+.count{font-size:12px;color:var(--muted);margin-top:3px}
+.search{margin:12px 0 4px}
+.empty{border:1px dashed var(--line);border-radius:12px;padding:18px;text-align:center;color:var(--muted);font-size:14px;margin-top:10px}
+.item{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px}
+.itemtop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.name{font-weight:800;word-break:break-word}
+.money{font-size:18px;font-weight:800;margin-top:4px}
+.meta{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.4}
+.item-actions{display:flex;gap:6px;flex-shrink:0}
+.item-actions button{min-height:38px}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.file-label{display:flex;align-items:center;justify-content:center;text-align:center}
+#restoreFile{display:none}
+.install{font-size:12px;line-height:1.55;color:var(--muted)}
+.install b{color:var(--text)}
+.edit-banner{display:none;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;padding:9px 10px;font-size:13px;margin-bottom:12px}
+.edit-banner.show{display:block}
+@media(max-width:520px){
+  h1{font-size:25px}
+  .result-grid{grid-template-columns:1fr 1.25fr}
+  .result-main{font-size:20px}
+  .two{grid-template-columns:1fr 1fr}
+  .itemtop{flex-direction:column}
+  .item-actions{width:100%}
+  .item-actions button{flex:1}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Lucky Draw</h1>
+  <div class="subtitle">Catat hadiah lucky draw. Jumlah hadiah dan total anggaran dihitung otomatis dan disimpan di perangkat ini.</div>
+
+  <section class="card result" aria-live="polite">
+    <div class="eyebrow">RINGKASAN HADIAH SAAT INI</div>
+    <div class="result-grid">
+      <div class="result-box">
+        <small>Total hadiah</small>
+        <div id="totalQty" class="result-main">0 pcs</div>
+      </div>
+      <div class="result-box">
+        <small>Total anggaran</small>
+        <div id="totalBudget" class="result-main">Rp0</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div id="editBanner" class="edit-banner">Mode edit aktif. Ubah data lalu tekan “Simpan Perubahan”.</div>
+    <form id="giftForm" novalidate>
+      <div class="field">
+        <label for="giftName">1. Hadiahnya apa?</label>
+        <input id="giftName" type="text" autocomplete="off" placeholder="Contoh: Kipas Angin Cosmos">
+      </div>
+
+      <div class="two">
+        <div class="field">
+          <label for="giftQty">2. Berapa jumlahnya?</label>
+          <input id="giftQty" type="number" min="1" step="1" inputmode="numeric" value="1" placeholder="Contoh: 2">
+        </div>
+        <div class="field">
+          <label for="giftPrice">3. Harga per pcs?</label>
+          <input id="giftPrice" type="number" min="0" step="1000" inputmode="numeric" placeholder="Contoh: 50000">
+        </div>
+      </div>
+
+      <div id="notice" class="notice" role="status" aria-live="polite"></div>
+      <button id="submitBtn" class="primary" type="submit">+ Simpan Hadiah</button>
+      <button id="cancelEdit" class="secondary" type="button" style="width:100%;margin-top:8px;display:none">Batal Edit</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="headrow">
+      <div>
+        <h2>Daftar Hadiah</h2>
+        <div id="count" class="count">0 jenis barang</div>
+      </div>
+      <button id="clearAll" class="secondary danger" type="button">Hapus semua</button>
+    </div>
+
+    <div class="search">
+      <input id="search" type="search" placeholder="Cari nama hadiah...">
+    </div>
+
+    <div id="empty" class="empty">Belum ada hadiah.</div>
+    <div id="list"></div>
+
+    <div class="tools">
+      <button id="backupBtn" class="secondary" type="button">Cadangkan Data</button>
+      <label for="restoreFile" class="secondary file-label">Pulihkan Data</label>
+      <input id="restoreFile" type="file" accept=".json,application/json">
+      <button id="resetInitial" class="secondary" type="button">Kembali ke Data Awal</button>
+      <button id="copySummary" class="secondary" type="button">Salin Ringkasan</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="install">
+      <b>Pasang di iPhone:</b> buka aplikasi ini di Safari → tekan tombol Share → pilih <b>Add to Home Screen</b>. Setelah dipasang, aplikasi dapat dibuka dari ikon di Home Screen.
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  "use strict";
+
+  var INITIAL = [{"id": "1", "name": "Kipas Angin Cosmos", "qty": 1, "price": 250000}, {"id": "2", "name": "Magic Com Miyako Kecil", "qty": 1, "price": 230000}, {"id": "3", "name": "Blender Yasaka", "qty": 2, "price": 130000}, {"id": "4", "name": "Kompor Gas 1 Tungku Miyako", "qty": 1, "price": 170000}, {"id": "5", "name": "Dispenser Miyako", "qty": 1, "price": 200000}, {"id": "6", "name": "Selimut", "qty": 2, "price": 100000}, {"id": "7", "name": "Maspion", "qty": 2, "price": 130000}, {"id": "8", "name": "Set Pel", "qty": 2, "price": 80000}, {"id": "9", "name": "Panci Kukus", "qty": 2, "price": 70000}, {"id": "10", "name": "Kettle Air Panas", "qty": 2, "price": 70000}, {"id": "11", "name": "Set Fry Pan Maspion", "qty": 2, "price": 85000}, {"id": "12", "name": "Payung Jumbo", "qty": 10, "price": 50000}, {"id": "13", "name": "Sapu", "qty": 5, "price": 326000}, {"id": "14", "name": "Tumbler 500 ml", "qty": 10, "price": 32000}, {"id": "15", "name": "Ember Hitam 18 Liter", "qty": 5, "price": 15000}, {"id": "16", "name": "Gayung", "qty": 10, "price": 7000}, {"id": "17", "name": "Mouse", "qty": 2, "price": 65000}, {"id": "18", "name": "Alat Seduh Kopi Manual", "qty": 2, "price": 60000}, {"id": "19", "name": "Teko Air Plastik 2 Liter", "qty": 5, "price": 25000}, {"id": "20", "name": "Hanger Baju", "qty": 10, "price": 26000}, {"id": "21", "name": "Spatula Set Kayu", "qty": 2, "price": 55000}, {"id": "22", "name": "Set Pisau Goto", "qty": 1, "price": 71000}, {"id": "23", "name": "Keranjang Sampah", "qty": 10, "price": 15000}, {"id": "24", "name": "Pengki", "qty": 5, "price": 15000}];
+  var STORAGE_KEY = "lucky_draw_hadiah_v4";
+  var items = [];
+  var editId = null;
+
+  var form = document.getElementById("giftForm");
+  var giftName = document.getElementById("giftName");
+  var giftQty = document.getElementById("giftQty");
+  var giftPrice = document.getElementById("giftPrice");
+  var notice = document.getElementById("notice");
+  var list = document.getElementById("list");
+  var empty = document.getElementById("empty");
+  var count = document.getElementById("count");
+  var totalQty = document.getElementById("totalQty");
+  var totalBudget = document.getElementById("totalBudget");
+  var clearAll = document.getElementById("clearAll");
+  var search = document.getElementById("search");
+  var submitBtn = document.getElementById("submitBtn");
+  var cancelEdit = document.getElementById("cancelEdit");
+  var editBanner = document.getElementById("editBanner");
+  var backupBtn = document.getElementById("backupBtn");
+  var restoreFile = document.getElementById("restoreFile");
+  var resetInitial = document.getElementById("resetInitial");
+  var copySummary = document.getElementById("copySummary");
+
+  function cloneInitial(){
+    return JSON.parse(JSON.stringify(INITIAL));
+  }
+
+  function rupiah(n){
+    return "Rp" + Math.round(Number(n) || 0).toLocaleString("id-ID");
+  }
+
+  function showNotice(message,type){
+    notice.textContent = message;
+    notice.className = "notice " + type;
+  }
+
+  function clearNotice(){
+    notice.textContent = "";
+    notice.className = "notice";
+  }
+
+  function saveData(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      return true;
+    }catch(e){
+      return false;
+    }
+  }
+
+  function loadData(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw){
+        var initial = cloneInitial();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
+        return initial;
+      }
+      var parsed = JSON.parse(raw);
+      if(!Array.isArray(parsed)) return cloneInitial();
+      return parsed.filter(function(x){
+        return x && typeof x.name === "string" && x.name.trim() &&
+          Number.isFinite(Number(x.qty)) && Number(x.qty) > 0 &&
+          Number.isFinite(Number(x.price)) && Number(x.price) >= 0;
+      }).map(function(x){
+        return {
+          id:String(x.id || (Date.now()+"-"+Math.random())),
+          name:String(x.name).trim(),
+          qty:Math.max(1,Math.floor(Number(x.qty))),
+          price:Math.max(0,Math.round(Number(x.price)))
+        };
+      });
+    }catch(e){
+      return cloneInitial();
+    }
+  }
+
+  function totals(){
+    var q=0,b=0;
+    items.forEach(function(x){
+      q += Number(x.qty);
+      b += Number(x.qty) * Number(x.price);
+    });
+    return {qty:q,budget:b};
+  }
+
+  function resetForm(message){
+    editId = null;
+    form.reset();
+    giftQty.value = "1";
+    submitBtn.textContent = "+ Simpan Hadiah";
+    cancelEdit.style.display = "none";
+    editBanner.className = "edit-banner";
+    if(message) showNotice(message,"ok"); else clearNotice();
+  }
+
+  function startEdit(id){
+    var x = items.find(function(v){ return v.id === id; });
+    if(!x) return;
+    editId = id;
+    giftName.value = x.name;
+    giftQty.value = x.qty;
+    giftPrice.value = x.price;
+    submitBtn.textContent = "Simpan Perubahan";
+    cancelEdit.style.display = "block";
+    editBanner.className = "edit-banner show";
+    clearNotice();
+    giftName.focus();
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  function removeItem(id){
+    var x = items.find(function(v){ return v.id === id; });
+    if(!x) return;
+    if(!window.confirm('Hapus "' + x.name + '"?')) return;
+    items = items.filter(function(v){ return v.id !== id; });
+    saveData();
+    if(editId === id) resetForm();
+    render();
+    showNotice(x.name + " sudah dihapus.","ok");
+  }
+
+  function render(){
+    list.innerHTML = "";
+    var keyword = search.value.trim().toLowerCase();
+    var filtered = items.filter(function(x){
+      return x.name.toLowerCase().indexOf(keyword) !== -1;
+    });
+
+    empty.style.display = filtered.length ? "none" : "block";
+    count.textContent = items.length + " jenis barang";
+
+    filtered.forEach(function(x,index){
+      var item = document.createElement("div");
+      item.className = "item";
+
+      var top = document.createElement("div");
+      top.className = "itemtop";
+
+      var left = document.createElement("div");
+      var nm = document.createElement("div");
+      nm.className = "name";
+      nm.textContent = (index+1) + ". " + x.name;
+
+      var mn = document.createElement("div");
+      mn.className = "money";
+      mn.textContent = rupiah(Number(x.qty) * Number(x.price));
+
+      var mt = document.createElement("div");
+      mt.className = "meta";
+      mt.textContent = x.qty + " pcs × " + rupiah(x.price) + "/pcs";
+
+      var actions = document.createElement("div");
+      actions.className = "item-actions";
+
+      var edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "secondary";
+      edit.textContent = "Edit";
+      edit.addEventListener("click",function(){ startEdit(x.id); });
+
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "secondary danger";
+      del.textContent = "Hapus";
+      del.addEventListener("click",function(){ removeItem(x.id); });
+
+      left.appendChild(nm);
+      left.appendChild(mn);
+      left.appendChild(mt);
+      actions.appendChild(edit);
+      actions.appendChild(del);
+      top.appendChild(left);
+      top.appendChild(actions);
+      item.appendChild(top);
+      list.appendChild(item);
+    });
+
+    var t = totals();
+    totalQty.textContent = t.qty.toLocaleString("id-ID") + " pcs";
+    totalBudget.textContent = rupiah(t.budget);
+  }
+
+  form.addEventListener("submit",function(e){
+    e.preventDefault();
+    clearNotice();
+
+    var name = giftName.value.trim();
+    var qty = Number(giftQty.value);
+    var price = Number(giftPrice.value);
+
+    if(!name){
+      showNotice("Isi nama hadiah terlebih dahulu.","error");
+      giftName.focus();
+      return;
+    }
+    if(!Number.isInteger(qty) || qty <= 0){
+      showNotice("Jumlah hadiah harus minimal 1.","error");
+      giftQty.focus();
+      return;
+    }
+    if(!Number.isFinite(price) || price < 0){
+      showNotice("Isi harga per pcs dengan benar.","error");
+      giftPrice.focus();
+      return;
+    }
+
+    if(editId){
+      var found = items.find(function(v){ return v.id === editId; });
+      if(found){
+        found.name = name;
+        found.qty = qty;
+        found.price = Math.round(price);
+      }
+      saveData();
+      resetForm("Perubahan berhasil disimpan.");
+    }else{
+      items.push({
+        id:String(Date.now())+"-"+String(Math.random()).slice(2),
+        name:name,
+        qty:qty,
+        price:Math.round(price)
+      });
+      saveData();
+      resetForm("Hadiah berhasil disimpan.");
+    }
+    search.value = "";
+    render();
+    giftName.focus();
+  });
+
+  cancelEdit.addEventListener("click",function(){
+    resetForm("Edit dibatalkan.");
+  });
+
+  search.addEventListener("input",render);
+
+  clearAll.addEventListener("click",function(){
+    if(!items.length) return;
+    if(window.confirm("Hapus semua hadiah?")){
+      items = [];
+      saveData();
+      resetForm("Semua hadiah sudah dihapus.");
+      render();
+    }
+  });
+
+  resetInitial.addEventListener("click",function(){
+    if(window.confirm("Kembalikan daftar ke data awal? Data sekarang akan diganti.")){
+      items = cloneInitial();
+      saveData();
+      resetForm("Data awal berhasil dipulihkan.");
+      search.value = "";
+      render();
+    }
+  });
+
+  backupBtn.addEventListener("click",function(){
+    try{
+      var blob = new Blob([JSON.stringify(items,null,2)],{type:"application/json"});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "backup-lucky-draw.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); },1000);
+    }catch(e){
+      showNotice("Browser ini tidak mendukung pencadangan file.","error");
+    }
+  });
+
+  restoreFile.addEventListener("change",function(){
+    var file = restoreFile.files && restoreFile.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var data = JSON.parse(reader.result);
+        if(!Array.isArray(data)) throw new Error("invalid");
+        items = data.filter(function(x){
+          return x && String(x.name || "").trim() &&
+            Number(x.qty) > 0 && Number(x.price) >= 0;
+        }).map(function(x){
+          return {
+            id:String(x.id || (Date.now()+"-"+Math.random())),
+            name:String(x.name).trim(),
+            qty:Math.max(1,Math.floor(Number(x.qty))),
+            price:Math.max(0,Math.round(Number(x.price)))
+          };
+        });
+        saveData();
+        resetForm("Data berhasil dipulihkan.");
+        search.value = "";
+        render();
+      }catch(e){
+        showNotice("File cadangan tidak valid.","error");
+      }
+      restoreFile.value = "";
+    };
+    reader.readAsText(file);
+  });
+
+  copySummary.addEventListener("click",function(){
+    var t=totals();
+    var text="Lucky Draw\\nTotal hadiah: "+t.qty+" pcs\\nTotal anggaran: "+rupiah(t.budget);
+    if(navigator.clipboard && window.isSecureContext){
+      navigator.clipboard.writeText(text).then(function(){
+        showNotice("Ringkasan berhasil disalin.","ok");
+      }).catch(function(){
+        fallbackCopy(text);
+      });
+    }else{
+      fallbackCopy(text);
+    }
+  });
+
+  function fallbackCopy(text){
+    var area=document.createElement("textarea");
+    area.value=text;
+    area.style.position="fixed";
+    area.style.opacity="0";
+    document.body.appendChild(area);
+    area.select();
+    try{
+      document.execCommand("copy");
+      showNotice("Ringkasan berhasil disalin.","ok");
+    }catch(e){
+      showNotice("Ringkasan tidak dapat disalin otomatis.","error");
+    }
+    area.remove();
+  }
+
+  items = loadData();
+  render();
+
+  if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
+    window.addEventListener("load",function(){
+      navigator.serviceWorker.register("./sw.js").catch(function(){});
+    });
+  }
+})();
+</script>
+</body>
+</html>
