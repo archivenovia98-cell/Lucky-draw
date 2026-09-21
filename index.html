@@ -144,6 +144,7 @@ button,.file-label{font:inherit}
       <input id="restoreFile" type="file" accept=".json,application/json">
       <button id="resetInitial" class="secondary" type="button">Kembali ke Data Awal</button>
       <button id="copySummary" class="secondary" type="button">Salin Ringkasan</button>
+      <button id="exportExcel" class="secondary" type="button">Export Excel</button>
     </div>
   </section>
 
@@ -182,6 +183,7 @@ button,.file-label{font:inherit}
   var restoreFile = document.getElementById("restoreFile");
   var resetInitial = document.getElementById("resetInitial");
   var copySummary = document.getElementById("copySummary");
+  var exportExcel = document.getElementById("exportExcel");
 
   function cloneInitial(){
     return JSON.parse(JSON.stringify(INITIAL));
@@ -462,6 +464,62 @@ button,.file-label{font:inherit}
       restoreFile.value = "";
     };
     reader.readAsText(file);
+  });
+
+  exportExcel.addEventListener("click",function(){
+    try{
+      var t = totals();
+
+      function esc(value){
+        return String(value)
+          .replace(/&/g,"&amp;")
+          .replace(/</g,"&lt;")
+          .replace(/>/g,"&gt;")
+          .replace(/"/g,"&quot;");
+      }
+
+      var rows = items.map(function(x,index){
+        return "<tr>" +
+          "<td>" + (index+1) + "</td>" +
+          "<td>" + esc(x.name) + "</td>" +
+          "<td>" + Number(x.qty) + "</td>" +
+          "<td>" + Number(x.price) + "</td>" +
+          "<td>" + (Number(x.qty) * Number(x.price)) + "</td>" +
+        "</tr>";
+      }).join("");
+
+      var html =
+        "<html xmlns:o='urn:schemas-microsoft-com:office:office' " +
+        "xmlns:x='urn:schemas-microsoft-com:office:excel' " +
+        "xmlns='http://www.w3.org/TR/REC-html40'>" +
+        "<head><meta charset='UTF-8'><style>" +
+        "table{border-collapse:collapse;font-family:Arial,sans-serif}" +
+        "th,td{border:1px solid #000;padding:6px}" +
+        "th{font-weight:bold;background:#eaf1ff}" +
+        "</style></head><body>" +
+        "<h2>Daftar Hadiah Lucky Draw</h2>" +
+        "<table>" +
+        "<tr><th>No</th><th>Nama Barang</th><th>Jumlah</th><th>Harga/Pcs</th><th>Total</th></tr>" +
+        rows +
+        "<tr><td colspan='2'><b>TOTAL</b></td><td><b>" + t.qty + "</b></td><td></td><td><b>" + t.budget + "</b></td></tr>" +
+        "</table></body></html>";
+
+      var blob = new Blob(["\ufeff", html], {
+        type:"application/vnd.ms-excel;charset=utf-8"
+      });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "lucky-draw-hadiah.xls";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); },1000);
+
+      showNotice("Data Excel berhasil dibuat.","ok");
+    }catch(e){
+      showNotice("Gagal membuat file Excel.","error");
+    }
   });
 
   copySummary.addEventListener("click",function(){
